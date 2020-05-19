@@ -561,26 +561,19 @@ class AtCoder(OnlineJudge):
         return True
 
     def submit(self):
-        html = self.download_html().decode('utf-8')
-        p = re.compile('"/submit\\?task_id=(.+?)"', re.M | re.S | re.I)
-        result = p.findall(html)
-        task_id = int(result[0])
-
-        html = self.get_opener().open('https://atcoder.jp/contests/%s/submit?task_id=%d' % (self.contest_id, task_id)).read().decode('utf-8')
-        p = re.compile('name="__session" value="([0-9a-f]+?)"', re.M | re.S | re.I)
-        result = p.findall(html)
-        session = result[0]
+        html = self.get_opener().open('https://atcoder.jp/contests/%s/submit?taskScreenName=%s' % (self.contest_id, self.problem_id)).read().decode('utf-8')
+        csrf_token = re.search(r'csrf_token\" value=\"(.+)\"', html)
+        csrf_token_string = csrf_token.group(1)
 
         opener = self.get_opener()
 
         postdata = dict()
-        postdata['__session'] = session
-        postdata['task_id'] = task_id
-        postdata['language_id_%d' % task_id] = self.get_language_id()
-        postdata['source_code'] = open(self.get_source_file_name()).read()
-        postdata['submit'] = 'submit'
+        postdata['data.TaskScreenName'] = self.problem_id
+        postdata['csrf_token'] = csrf_token_string
+        postdata['data.LanguageId'] = self.get_language_id()
+        postdata['sourceCode'] = open(self.get_source_file_name()).read()
         params = urllib.parse.urlencode(postdata).encode('utf-8')
-        p = opener.open('https://atcoder.jp/contests/%s/submit?task_id=%d' % (self.contest_id, task_id), params)
+        p = opener.open('https://atcoder.jp/contests/%s/submit' % self.contest_id, params)
         print(('Submit ... ' + str(p.getcode())))
 
         time.sleep(2.0)
