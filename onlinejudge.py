@@ -533,7 +533,6 @@ class AtCoder(OnlineJudge):
             res = self.get_opener().open('https://atcoder.jp/login').read().decode('utf-8')
             csrf_token = re.search(r'csrf_token\" value=\"(.+)\"', res)
             csrf_token_string = csrf_token.group(1)
-            print(csrf_token_string)
             setting = json.load(open(self.options.setting_file_path))['atcoder']
             postdata = dict()
             postdata['username'] = setting['user_id']
