@@ -524,19 +524,23 @@ class AtCoder(OnlineJudge):
             return self.problem_id
 
     def get_url(self):
-        return "https://%s.contest.atcoder.jp/tasks/%s" % (self.contest_id, self.problem_id)
+        return "https://atcoder.jp/contests/%s/tasks/%s" % (self.contest_id, self.problem_id)
 
     def get_opener(self):
         if self.opener == None:
             opener = OnlineJudge.get_opener(self)
 
+            res = self.get_opener().open('https://atcoder.jp/login').read().decode('utf-8')
+            csrf_token = re.search(r'csrf_token\" value=\"(.+)\"', res)
+            csrf_token_string = csrf_token.group(1)
+            print(csrf_token_string)
             setting = json.load(open(self.options.setting_file_path))['atcoder']
             postdata = dict()
-            postdata['name'] = setting['user_id']
+            postdata['username'] = setting['user_id']
             postdata['password'] = setting['password']
-            postdata['submit'] = 'login'
+            postdata['csrf_token'] = csrf_token_string
             params = urllib.parse.urlencode(postdata).encode('utf-8')
-            p = opener.open('https://%s.contest.atcoder.jp/login' % self.contest_id, params)
+            p = opener.open('https://atcoder.jp/login', params)
             print(('Login ... ' + str(p.getcode())))
         return self.opener
 
@@ -562,7 +566,7 @@ class AtCoder(OnlineJudge):
         result = p.findall(html)
         task_id = int(result[0])
 
-        html = self.get_opener().open('https://%s.contest.atcoder.jp/submit?task_id=%d' % (self.contest_id, task_id)).read().decode('utf-8')
+        html = self.get_opener().open('https://atcoder.jp/contests/%s/submit?task_id=%d' % (self.contest_id, task_id)).read().decode('utf-8')
         p = re.compile('name="__session" value="([0-9a-f]+?)"', re.M | re.S | re.I)
         result = p.findall(html)
         session = result[0]
@@ -576,12 +580,12 @@ class AtCoder(OnlineJudge):
         postdata['source_code'] = open(self.get_source_file_name()).read()
         postdata['submit'] = 'submit'
         params = urllib.parse.urlencode(postdata).encode('utf-8')
-        p = opener.open('https://%s.contest.atcoder.jp/submit?task_id=%d' % (self.contest_id, task_id), params)
+        p = opener.open('https://atcoder.jp/contests/%s/submit?task_id=%d' % (self.contest_id, task_id), params)
         print(('Submit ... ' + str(p.getcode())))
 
         time.sleep(2.0)
         setting = json.load(open(self.options.setting_file_path))['atcoder']
-        subprocess.call([setting['browser'], 'https://%s.contest.atcoder.jp/submissions/me' % self.contest_id])
+        subprocess.call([setting['browser'], 'https://atcoder.jp/contests/%s/submissions/me' % self.contest_id])
 
     def get_language_id_from_extension(self):
         return {'.cpp':'4003',
